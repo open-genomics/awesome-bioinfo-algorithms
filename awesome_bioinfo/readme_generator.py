@@ -110,6 +110,11 @@ class ReadmeGenerator:
         anchor = anchor.strip("-")
         return anchor
 
+    @staticmethod
+    def _escape_cell(value: str) -> str:
+        """Escape pipe characters in data values so they cannot break table rows."""
+        return str(value).replace("|", r"\|")
+
     def _generate_category_overview(self) -> str:
         """Generate category overview table with statistics."""
         lines = ["## 分类总览", ""]
@@ -121,7 +126,9 @@ class ReadmeGenerator:
             algos = self._registry.get_by_category(category.id)
             if algos:
                 count = len(algos)
-                lines.append(f"| {category.name} | {count} | {category.description} |")
+                name = self._escape_cell(category.name)
+                description = self._escape_cell(category.description)
+                lines.append(f"| {name} | {count} | {description} |")
 
         lines.append("")
         return "\n".join(lines)
@@ -192,11 +199,12 @@ class ReadmeGenerator:
 
             for algo, _ in algos:
                 badge = algo.get_year_badge()
-                name = f"{badge} {algo.name}" if badge else algo.name
-                year = str(algo.year) if algo.year else "-"
-                time = algo.time_complexity
-                space = algo.space_complexity or "-"
+                name = self._escape_cell(f"{badge} {algo.name}" if badge else algo.name)
+                year = self._escape_cell(str(algo.year) if algo.year else "-")
+                time = self._escape_cell(algo.time_complexity)
+                space = self._escape_cell(algo.space_complexity or "-")
                 tags = " ".join([f"`{t}`" for t in algo.tags[:3]]) if algo.tags else "-"
+                tags = self._escape_cell(tags)
 
                 lines.append(f"| {name} | {year} | {time} | {space} | {tags} |")
 

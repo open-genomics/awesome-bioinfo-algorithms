@@ -33,3 +33,11 @@ pytest tests/ -v --tb=short
 - 必填：`id`（lowercase-hyphenated，全局唯一）、`name`、`description`（50-500 字）、`purpose`、`time_complexity`（`O(...)`）、`category`
 - `category`/`subcategory` 必须存在于 `data/categories.yaml`
 - 模板：`templates/algorithm_template.yaml`
+
+## 决策笔记
+
+非平凡改动（行为、架构、跨文件契约、流程/工具链、文档约定等维护者日后可能重访的决定）须写决策笔记到 `.agents/notes/`；纯机械改动（错别字、格式化、死链修复、无歧义重命名）直接改，不写笔记。
+
+- 路径即分类：`.agents/notes/<lifecycle>/<class>/yyyy-mm-dd-topic.md`，lifecycle ∈ `proposed` / `implemented` / `rejected`，class ∈ `feature` / `bug-fix` / `simplification` / `architecture` / `process` / `testing`；只建用到的目录
+- 格式：前三行 `# Agent Note: <标题>` + 空行 + `Status: implemented`；正文骨架 `## Problem` → `## Decision`（现在时）→ `## Alternatives considered`（只记真实考虑过的备选）→ `## Consequences`（代价与收益）→ `## Verification`（具体命令）
+- 动手前先检索历史决策：`rg --hidden --glob '!.agents/notes/archived/**' "<关键词>" .agents/notes/`

@@ -6,8 +6,8 @@ version: "1.0.3"
 date-released: 2026-04-30
 type: software
 authors:
-  - name: "LessUp"
-repository-code: "https://github.com/LessUp/awesome-bioinfo-algorithms"
+  - name: "open-genomics Community"
+repository-code: "https://github.com/open-genomics/awesome-bioinfo-algorithms"
 license: CC0-1.0
 keywords:
   - bioinformatics

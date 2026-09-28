@@ -102,7 +102,8 @@ pytest tests/ -v --tb=short
 
 ## 项目统计
 
-- 版本：1.0.3
-- 算法数量：195 条目
-- 分类数量：16 个顶级分类 + 子分类
-- 标签数量：392 个
+统计数字随数据变更而变化，本文件不硬编码，以唯一权威出处为准：
+
+- 版本：`pyproject.toml` 的 `version`
+- 算法 / 分类 / 标签数量：`python -m awesome_bioinfo stats` 的实时输出
+- README 中的统计徽章与分类总览表由 `python -m awesome_bioinfo generate` 自动同步

@@ -128,7 +128,7 @@ async def check_all_links(data_dir: Path) -> LinkCheckSummary:
         connector=connector,
         timeout=timeout,
         headers={
-            "User-Agent": "AwesomeBioinfoBot/1.0 (+https://github.com/LessUp/awesome-bioinfo-algorithms)"
+            "User-Agent": "AwesomeBioinfoBot/1.0 (+https://github.com/open-genomics/awesome-bioinfo-algorithms)"
         },
     ) as session:
         semaphore = asyncio.Semaphore(5)  # Limit concurrent requests

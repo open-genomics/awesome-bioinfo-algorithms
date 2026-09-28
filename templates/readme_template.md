@@ -2,9 +2,9 @@
 
 <p align="center">
   <a href="https://awesome.re"><img src="https://awesome.re/badge.svg" alt="Awesome"></a>
-  <a href="https://github.com/LessUp/awesome-bioinfo-algorithms/actions/workflows/ci.yml"><img src="https://github.com/LessUp/awesome-bioinfo-algorithms/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/open-genomics/awesome-bioinfo-algorithms/actions/workflows/ci.yml"><img src="https://github.com/open-genomics/awesome-bioinfo-algorithms/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="http://creativecommons.org/publicdomain/zero/1.0/"><img src="https://img.shields.io/badge/License-CC0%201.0-lightgrey.svg" alt="License"></a>
-  <a href="https://github.com/LessUp/awesome-bioinfo-algorithms/blob/main/CITATION.cff"><img src="https://img.shields.io/badge/Cite%20Me-APA-blue" alt="Citation"></a>
+  <a href="https://github.com/open-genomics/awesome-bioinfo-algorithms/blob/master/CITATION.cff"><img src="https://img.shields.io/badge/Cite%20Me-APA-blue" alt="Citation"></a>
 </p>
 
 <p align="center">
@@ -56,7 +56,7 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/LessUp/awesome-bioinfo-algorithms.git
+git clone https://github.com/open-genomics/awesome-bioinfo-algorithms.git
 cd awesome-bioinfo-algorithms
 
 # 安装依赖
@@ -81,7 +81,7 @@ python -m awesome_bioinfo stats
 
 ---
 
-## 📑 目录
+## 📑 目录 <a id="目录"></a>
 
 {{ toc }}
 
@@ -152,9 +152,9 @@ python -m awesome_bioinfo generate
 ```bibtex
 @software{awesome_bioinfo_algorithms,
   title = {Awesome Bioinformatics Algorithms},
-  author = {{LessUp Community}},
+  author = {{open-genomics Community}},
   year = {2025},
-  url = {https://github.com/LessUp/awesome-bioinfo-algorithms}
+  url = {https://github.com/open-genomics/awesome-bioinfo-algorithms}
 }
 ```
 
@@ -181,5 +181,5 @@ python -m awesome_bioinfo generate
 
 <p align="center">
   <b>Made with ❤️ by the community</b><br>
-  © 2025-2026 <a href="https://github.com/LessUp">LessUp</a> Community
+  © 2025-2026 <a href="https://github.com/open-genomics">open-genomics</a> Community
 </p>

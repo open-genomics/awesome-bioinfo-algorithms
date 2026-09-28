@@ -1,11 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Question or Discussion
-    url: https://github.com/LessUp/awesome-bioinfo-algorithms/discussions
+    url: https://github.com/open-genomics/awesome-bioinfo-algorithms/discussions
     about: Please use Discussions for questions, ideas, and general discussion
-  - name: Documentation
-    url: https://lessup.github.io/awesome-bioinfo-algorithms/
-    about: Check the documentation site first
   - name: Contributing Guidelines
-    url: https://github.com/LessUp/awesome-bioinfo-algorithms/blob/main/CONTRIBUTING.md
+    url: https://github.com/open-genomics/awesome-bioinfo-algorithms/blob/master/CONTRIBUTING.md
     about: Read our contributing guidelines

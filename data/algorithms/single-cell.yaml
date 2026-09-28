@@ -315,7 +315,7 @@ algorithms:
       - R
 
   - id: kallisto-bustools
-    name: kallisto | bustools
+    name: kallisto + bustools
     description: |
       基于伪比对的快速单细胞 RNA-seq 预处理流程，利用 kallisto 索引和 bustools 流式处理实现轻量级定量。
       该方法内存占用极低，处理速度快，支持多种单细胞平台，是大规模单细胞数据预处理的高效替代方案。

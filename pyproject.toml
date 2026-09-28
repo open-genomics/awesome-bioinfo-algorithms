@@ -10,7 +10,7 @@ readme = "README.md"
 license = {text = "CC0-1.0"}
 requires-python = ">=3.9"
 authors = [
-    {name = "LessUp"}
+    {name = "open-genomics Community"}
 ]
 keywords = ["bioinformatics", "algorithms", "awesome-list", "repository-tooling"]
 classifiers = [
@@ -39,9 +39,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/LessUp/awesome-bioinfo-algorithms"
-Repository = "https://github.com/LessUp/awesome-bioinfo-algorithms"
-Issues = "https://github.com/LessUp/awesome-bioinfo-algorithms/issues"
+Homepage = "https://github.com/open-genomics/awesome-bioinfo-algorithms"
+Repository = "https://github.com/open-genomics/awesome-bioinfo-algorithms"
+Issues = "https://github.com/open-genomics/awesome-bioinfo-algorithms/issues"
 
 # This project is maintained and executed from a repository checkout.
 # The Python configuration here exists to support local development,

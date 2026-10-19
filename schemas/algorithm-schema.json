@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/LessUp/awesome-bioinfo-algorithms/schemas/algorithm-schema.json",
+  "$id": "https://github.com/open-genomics/awesome-bioinfo-algorithms/schemas/algorithm-schema.json",
   "title": "Algorithm Entry Schema",
   "description": "Schema for bioinformatics algorithm entries",
   "type": "object",

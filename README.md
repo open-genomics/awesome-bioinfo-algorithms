@@ -633,6 +633,11 @@ python -m awesome_bioinfo generate
 - ✅ 用于商业用途
 - ✅ 无需署名
 
+## 🔗 相关项目
+
+- [wiki-bioinfo](https://github.com/open-genomics/wiki-bioinfo) — 生物信息学体系化知识库（连续阅读的知识地图）
+- [micos-2024](https://github.com/open-genomics/micos-2024) — 宏基因组学端到端分析流程
+
 ---
 
 <p align="center">

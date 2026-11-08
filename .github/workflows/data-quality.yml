@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   link-check:
@@ -23,7 +24,6 @@ jobs:
 
       - name: Check URL validity
         run: python -m awesome_bioinfo check-links
-        continue-on-error: true
 
       - name: Create Issue on Failure
         if: failure()

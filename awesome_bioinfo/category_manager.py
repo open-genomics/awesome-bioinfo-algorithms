@@ -28,6 +28,7 @@ class CategoryManager:
         self._categories: list[Category] = []
         self._category_map: dict[str, Category] = {}
         self._relationships = CategoryRelationships()
+        self._loaded = False
 
     def load_categories(self, path: str) -> list[Category]:
         """
@@ -45,12 +46,13 @@ class CategoryManager:
         with open(path, encoding="utf-8") as f:
             data = yaml.safe_load(f)
 
-        if not data or "categories" not in data:
-            return []
-
         self._categories = []
         self._category_map = {}
         self._relationships = CategoryRelationships()
+        self._loaded = True
+
+        if not data or "categories" not in data:
+            return []
 
         for cat_data in data["categories"]:
             category = Category.from_dict(cat_data)
@@ -154,6 +156,7 @@ class CategoryManager:
         self._categories = categories
         self._category_map = {}
         self._relationships = CategoryRelationships()
+        self._loaded = True
         for cat in categories:
             self._register_category(cat)
         self._build_relationships()
@@ -184,10 +187,7 @@ class CategoryManager:
         result = ValidationResult(is_valid=True)
 
         # Validate category exists
-        if (
-            self._relationships.valid_categories
-            and category not in self._relationships.valid_categories
-        ):
+        if self._loaded and category not in self._relationships.valid_categories:
             result.add_error(
                 f"Invalid category: '{category}'. "
                 f"Valid categories: {', '.join(sorted(self._relationships.valid_categories))}"

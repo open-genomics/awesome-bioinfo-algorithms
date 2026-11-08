@@ -14,7 +14,7 @@
 | `schema.py` | 数据类 `Category`, `AlgorithmEntry`, `Reference`；常量 `VALID_DIFFICULTIES`, `VALID_REFERENCE_TYPES` |
 | `algorithm_registry.py` | 加载所有 YAML、按 category/tag/subcategory/id 索引、全文搜索 |
 | `category_manager.py` | 分类层级加载与查询；`category_exists()` 用于验证 |
-| `validate.py` | 字段规则 + JSON Schema（`schemas/algorithm-schema.json`）双重验证；重复 ID 检测 |
+| `validate.py` | 字段规则验证；重复 ID 检测 |
 | `data_io.py` | YAML 读写、JSON/CSV 导出 |
 | `data_store.py` | 数据存储 |
 | `readme_generator.py` | 从 `templates/readme_template.md` 生成 `README.md` |

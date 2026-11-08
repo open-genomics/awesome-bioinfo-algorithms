@@ -314,3 +314,31 @@ def test_load_categories_accepts_empty_yaml_document(tmp_path):
     assert loaded == []
     assert manager.list_all_categories() == []
     assert manager.list_all_category_ids() == []
+
+
+@pytest.mark.parametrize("content", ["metadata: {}\n", ""])
+def test_load_categories_resets_previous_state_without_categories_key(tmp_path, content):
+    """Loading a file without a categories list should clear prior in-memory state."""
+    manager = CategoryManager()
+    manager.from_categories([build_category_with_subcategory()])
+
+    file_path = tmp_path / "categories.yaml"
+    write_categories_yaml(file_path, content)
+    loaded = manager.load_categories(str(file_path))
+
+    assert loaded == []
+    assert manager.list_all_categories() == []
+    assert manager.list_all_category_ids() == []
+
+
+def test_validate_category_reference_rejects_unknown_id_after_empty_categories(tmp_path):
+    """A loaded empty category table should reject any category reference."""
+    file_path = tmp_path / "categories.yaml"
+    write_categories_yaml(file_path, "categories: []\n")
+    manager = CategoryManager()
+    manager.load_categories(str(file_path))
+
+    result = manager.validate_category_reference("nonexistent-category")
+
+    assert not result.is_valid
+    assert any("Invalid category: 'nonexistent-category'" in error for error in result.errors)

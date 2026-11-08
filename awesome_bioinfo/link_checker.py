@@ -10,10 +10,12 @@ This command validates all URLs in algorithm entries and reports broken links.
 from __future__ import annotations
 
 import asyncio
+import ipaddress
+import socket
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 import aiohttp
 import yaml
@@ -53,17 +55,68 @@ class LinkCheckSummary:
             self.warnings += 1
 
 
-async def check_url(
-    session: aiohttp.ClientSession, url: str, timeout: int = 30
-) -> tuple[int | None, str]:
-    """Check if a URL is accessible."""
+def _is_public_host(host: str) -> bool:
+    """Reject loopback/private/link-local targets; unresolved hosts are allowed."""
     try:
-        async with session.head(url, timeout=timeout, allow_redirects=True) as response:
-            # HEAD request might not be supported, try GET for 405 errors
-            if response.status == 405:
-                async with session.get(url, timeout=timeout, allow_redirects=True) as get_response:
-                    return get_response.status, ""
-            return response.status, ""
+        addresses = socket.getaddrinfo(host, None)
+    except OSError:
+        # 解析失败时无法建立连接；交给 aiohttp 报错，不把暂时不可解析的
+        # 公开链接误判为安全问题。
+        return True
+    for address in addresses:
+        try:
+            ip = ipaddress.ip_address(address[4][0])
+        except ValueError:
+            continue
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_multicast
+            or ip.is_reserved
+            or ip.is_unspecified
+        ):
+            return False
+    return True
+
+
+def is_safe_url(url: str) -> bool:
+    """Check that a URL is http(s) and does not target a non-public address."""
+    try:
+        result = urlparse(url)
+    except Exception:
+        return False
+    if result.scheme not in ("http", "https") or not result.hostname:
+        return False
+    return _is_public_host(result.hostname)
+
+
+async def check_url(
+    session: aiohttp.ClientSession, url: str, timeout: int = 30, max_redirects: int = 5
+) -> tuple[int | None, str]:
+    """Check if a URL is accessible without following redirects to private hosts."""
+    current = url
+    try:
+        for _ in range(max_redirects + 1):
+            if not is_safe_url(current):
+                return None, "URL targets a non-public address"
+            async with session.head(
+                current, timeout=timeout, allow_redirects=False
+            ) as response:
+                if response.status in (301, 302, 303, 307, 308):
+                    location = response.headers.get("Location")
+                    if not location:
+                        return response.status, ""
+                    current = urljoin(current, location)
+                    continue
+                # HEAD request might not be supported, try GET for 405 errors
+                if response.status == 405:
+                    async with session.get(
+                        current, timeout=timeout, allow_redirects=False
+                    ) as get_response:
+                        return get_response.status, ""
+                return response.status, ""
+        return None, "Too many redirects"
     except asyncio.TimeoutError:
         return None, "Timeout"
     except aiohttp.ClientError as e:
@@ -145,6 +198,15 @@ async def check_all_links(data_dir: Path) -> LinkCheckSummary:
                         field_type=field_type,
                         status="error",
                         error_message="Invalid URL format",
+                    )
+
+                if not is_safe_url(url):
+                    return LinkCheckResult(
+                        url=url,
+                        algorithm_id=algo_id,
+                        field_type=field_type,
+                        status="error",
+                        error_message="URL targets a non-public address",
                     )
 
                 status_code, error = await check_url(session, url)

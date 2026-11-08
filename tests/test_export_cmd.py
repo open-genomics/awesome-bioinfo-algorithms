@@ -1,5 +1,7 @@
 """Tests for the export command module."""
 
+import csv
+import io
 import json
 import os
 import tempfile
@@ -89,6 +91,34 @@ class TestCmdExport:
             assert data["total"] == 2
         finally:
             os.unlink(output_path)
+
+    def test_export_csv_neutralizes_formula_prefixes(
+        self, mock_category_manager, capsys
+    ):
+        """Cells starting with spreadsheet formula prefixes must be quoted."""
+        registry = AlgorithmRegistry()
+        registry.from_algorithms(
+            [
+                AlgorithmEntry(
+                    id="algo-formula",
+                    name='=HYPERLINK("https://example.invalid")',
+                    description=(
+                        "A test algorithm description that meets the minimum length requirement."
+                    ),
+                    purpose="+SUM(1,1)",
+                    time_complexity="O(n)",
+                    category="test-cat",
+                )
+            ]
+        )
+
+        assert cmd_export(registry, mock_category_manager, fmt="csv") == 0
+        rows = list(csv.reader(io.StringIO(capsys.readouterr().out)))
+        header, row = rows[0], rows[1]
+        name = row[header.index("name")]
+        purpose = row[header.index("purpose")]
+        assert name.startswith("'=")
+        assert purpose.startswith("'+")
 
     def test_export_csv_to_file(self, mock_registry, mock_category_manager):
         """Test CSV export to file."""

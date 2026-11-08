@@ -311,6 +311,16 @@ def cmd_compare(
 # =========================================================================
 
 
+_CSV_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _csv_safe(value: object) -> object:
+    """Neutralize spreadsheet formula prefixes in exported CSV cells."""
+    if isinstance(value, str) and value.startswith(_CSV_FORMULA_PREFIXES):
+        return "'" + value
+    return value
+
+
 def cmd_export(
     registry: AlgorithmRegistry,
     category_manager: CategoryManager,
@@ -354,17 +364,20 @@ def cmd_export(
         for a in algorithms:
             writer.writerow(
                 [
-                    a.id,
-                    a.name,
-                    a.year or "",
-                    a.category,
-                    a.subcategory,
-                    a.difficulty,
-                    a.time_complexity,
-                    a.space_complexity,
-                    "|".join(a.language),
-                    "|".join(a.tags),
-                    a.purpose,
+                    _csv_safe(value)
+                    for value in (
+                        a.id,
+                        a.name,
+                        a.year or "",
+                        a.category,
+                        a.subcategory,
+                        a.difficulty,
+                        a.time_complexity,
+                        a.space_complexity,
+                        "|".join(a.language),
+                        "|".join(a.tags),
+                        a.purpose,
+                    )
                 ]
             )
         content = buf.getvalue()

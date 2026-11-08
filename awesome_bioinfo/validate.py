@@ -108,6 +108,10 @@ class FieldValidator:
         """
         result = ValidationResult(is_valid=True)
 
+        if not isinstance(data, dict):
+            result.add_error(f"Algorithm entry must be a mapping, got {type(data).__name__}")
+            return result
+
         allowed_fields = set(self.REQUIRED_ALGORITHM_FIELDS + self.OPTIONAL_ALGORITHM_FIELDS)
         unknown_fields = sorted(
             field_name for field_name in data if field_name not in allowed_fields
@@ -202,52 +206,50 @@ class FieldValidator:
                 )
 
         language = data.get("language", [])
-        if language:
-            if not isinstance(language, list):
-                result.add_error("Field 'language' must be a list")
-            else:
-                for i, item in enumerate(language):
-                    if not isinstance(item, str):
-                        result.add_error(
-                            f"Field 'language' item {i} must be a string, got {type(item).__name__}"
-                        )
-                    elif not item.strip():
-                        result.add_error(f"Field 'language' item {i} cannot be empty")
+        if language is None or not isinstance(language, list):
+            result.add_error("Field 'language' must be a list")
+        else:
+            for i, item in enumerate(language):
+                if not isinstance(item, str):
+                    result.add_error(
+                        f"Field 'language' item {i} must be a string, got {type(item).__name__}"
+                    )
+                elif not item.strip():
+                    result.add_error(f"Field 'language' item {i} cannot be empty")
 
         references = data.get("references", [])
-        if references:
-            if not isinstance(references, list):
-                result.add_error("Field 'references' must be a list")
-            else:
-                for i, ref in enumerate(references):
-                    if not isinstance(ref, dict):
-                        result.add_error(
-                            f"Field 'references' item {i} must be a mapping, "
-                            f"got {type(ref).__name__}"
+        if references is None or not isinstance(references, list):
+            result.add_error("Field 'references' must be a list")
+        else:
+            for i, ref in enumerate(references):
+                if not isinstance(ref, dict):
+                    result.add_error(
+                        f"Field 'references' item {i} must be a mapping, "
+                        f"got {type(ref).__name__}"
+                    )
+                    continue
+                if "url" not in ref:
+                    result.add_error(f"Field 'references' item {i} missing required 'url'")
+                elif not isinstance(ref["url"], str) or not ref["url"].strip():
+                    result.add_error(
+                        f"Field 'references' item {i} 'url' must be a non-empty string"
+                    )
+                elif not self.URL_PATTERN.match(ref["url"]):
+                    result.add_warning(f"Invalid URL in references item {i}: {ref['url']}")
+                if "title" in ref and (
+                    not isinstance(ref["title"], str) or not ref["title"].strip()
+                ):
+                    result.add_error(
+                        f"Field 'references' item {i} 'title' must be a non-empty string"
+                    )
+                if "type" in ref:
+                    if not isinstance(ref["type"], str):
+                        result.add_error(f"Field 'references' item {i} 'type' must be a string")
+                    elif ref["type"] not in VALID_REFERENCE_TYPES:
+                        result.add_warning(
+                            f"Unknown reference type: '{ref['type']}'. "
+                            f"Valid types: {', '.join(VALID_REFERENCE_TYPES)}"
                         )
-                        continue
-                    if "url" not in ref:
-                        result.add_error(f"Field 'references' item {i} missing required 'url'")
-                    elif not isinstance(ref["url"], str) or not ref["url"].strip():
-                        result.add_error(
-                            f"Field 'references' item {i} 'url' must be a non-empty string"
-                        )
-                    elif not self.URL_PATTERN.match(ref["url"]):
-                        result.add_warning(f"Invalid URL in references item {i}: {ref['url']}")
-                    if "title" in ref and (
-                        not isinstance(ref["title"], str) or not ref["title"].strip()
-                    ):
-                        result.add_error(
-                            f"Field 'references' item {i} 'title' must be a non-empty string"
-                        )
-                    if "type" in ref:
-                        if not isinstance(ref["type"], str):
-                            result.add_error(f"Field 'references' item {i} 'type' must be a string")
-                        elif ref["type"] not in VALID_REFERENCE_TYPES:
-                            result.add_warning(
-                                f"Unknown reference type: '{ref['type']}'. "
-                                f"Valid types: {', '.join(VALID_REFERENCE_TYPES)}"
-                            )
 
         return result
 
@@ -262,6 +264,10 @@ class FieldValidator:
             ValidationResult with validation status and any errors/warnings
         """
         result = ValidationResult(is_valid=True)
+
+        if not isinstance(data, dict):
+            result.add_error(f"Category entry must be a mapping, got {type(data).__name__}")
+            return result
 
         allowed_fields = set(self.REQUIRED_CATEGORY_FIELDS + self.OPTIONAL_CATEGORY_FIELDS)
         unknown_fields = sorted(
@@ -363,6 +369,7 @@ class Validator(FieldValidator):
         super().__init__()
         self.valid_categories = valid_categories or []
         self.category_parents: dict[str, Optional[str]] = {}
+        self._categories_loaded = valid_categories is not None
 
     def validate_algorithm(self, data: dict[str, Any]) -> ValidationResult:
         """
@@ -375,9 +382,11 @@ class Validator(FieldValidator):
             ValidationResult with validation status and any errors/warnings
         """
         result = super().validate_algorithm(data)
+        if not isinstance(data, dict):
+            return result
 
         # Validate category references
-        if self.valid_categories and data.get("category") not in self.valid_categories:
+        if self._categories_loaded and data.get("category") not in self.valid_categories:
             result.add_error(
                 f"Invalid category: '{data.get('category')}'. "
                 f"Valid categories: {', '.join(self.valid_categories)}"
@@ -385,7 +394,7 @@ class Validator(FieldValidator):
 
         subcategory = data.get("subcategory", "")
         if subcategory:
-            if self.category_parents:
+            if self._categories_loaded:
                 if subcategory not in self.category_parents:
                     result.add_error(f"Invalid subcategory: '{subcategory}'")
                 else:
@@ -416,6 +425,12 @@ class Validator(FieldValidator):
         if not result.is_valid:
             return result
 
+        if not isinstance(data, dict):
+            result.add_error(
+                f"Root of algorithms file must be a mapping, got {type(data).__name__}"
+            )
+            return result
+
         if "algorithms" not in data:
             result.add_error("Missing 'algorithms' key in file")
             return result
@@ -426,6 +441,12 @@ class Validator(FieldValidator):
 
         seen_ids = set()
         for i, algo in enumerate(data["algorithms"]):
+            if not isinstance(algo, dict):
+                result.add_error(
+                    f"Algorithm {i} entry must be a mapping, got {type(algo).__name__}"
+                )
+                continue
+
             algo_result = self.validate_algorithm(algo)
             for error in algo_result.errors:
                 result.add_error(f"Algorithm {i} ({algo.get('id', 'unknown')}): {error}")
@@ -458,6 +479,12 @@ class Validator(FieldValidator):
         if not result.is_valid:
             return result
 
+        if not isinstance(data, dict):
+            result.add_error(
+                f"Root of categories file must be a mapping, got {type(data).__name__}"
+            )
+            return result
+
         if "categories" not in data:
             result.add_error("Missing 'categories' key in file")
             return result
@@ -466,10 +493,15 @@ class Validator(FieldValidator):
             result.add_error("'categories' must be a list")
             return result
 
+        self._categories_loaded = True
         self.valid_categories = []
         self.category_parents = {}
 
         for i, cat in enumerate(data["categories"]):
+            if not isinstance(cat, dict):
+                result.add_error(f"Category {i} entry must be a mapping, got {type(cat).__name__}")
+                continue
+
             cat_result = self.validate_category(cat)
             for error in cat_result.errors:
                 result.add_error(f"Category {i} ({cat.get('id', 'unknown')}): {error}")
@@ -494,6 +526,7 @@ class Validator(FieldValidator):
             ValidationResult with validation status and any errors/warnings
         """
         result = ValidationResult(is_valid=True)
+        self._categories_loaded = False
         self.valid_categories = []
         self.category_parents = {}
 
@@ -515,8 +548,14 @@ class Validator(FieldValidator):
                         result.add_warning(f"{filename}: {warning}")
 
                     parse_result, data = self.validate_yaml_file(file_path)
-                    if parse_result.is_valid and isinstance(data.get("algorithms"), list):
+                    if (
+                        parse_result.is_valid
+                        and isinstance(data, dict)
+                        and isinstance(data.get("algorithms"), list)
+                    ):
                         for algo in data["algorithms"]:
+                            if not isinstance(algo, dict):
+                                continue
                             algo_id = algo.get("id")
                             if not algo_id:
                                 continue
@@ -542,6 +581,9 @@ class Validator(FieldValidator):
             relationships = {}
 
         for category in categories:
+            if not isinstance(category, dict):
+                continue
+
             category_id = category.get("id")
             if not category_id:
                 continue

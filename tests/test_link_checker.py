@@ -4,10 +4,12 @@ import asyncio
 from dataclasses import asdict
 from unittest.mock import AsyncMock, MagicMock
 
+from awesome_bioinfo import link_checker
 from awesome_bioinfo.link_checker import (
     LinkCheckResult,
     LinkCheckSummary,
     check_url,
+    is_safe_url,
     is_valid_url,
 )
 
@@ -201,5 +203,37 @@ class TestCheckUrl:
             status, error = await check_url(mock_session, "https://example.com")
             assert status == 200
             mock_session.get.assert_called_once()
+
+        asyncio.run(run_test())
+
+
+class TestIsSafeUrl:
+    """Test SSRF guard for link checking."""
+
+    def test_rejects_private_and_loopback_targets(self) -> None:
+        for url in (
+            "http://127.0.0.1/",
+            "http://[::1]/",
+            "http://10.1.2.3/",
+            "http://169.254.169.254/latest/meta-data/",
+            "file:///etc/passwd",
+        ):
+            assert is_safe_url(url) is False
+
+    def test_accepts_public_address(self, monkeypatch) -> None:
+        monkeypatch.setattr(
+            link_checker.socket,
+            "getaddrinfo",
+            lambda *args, **kwargs: [(2, 1, 6, "", ("93.184.216.34", 0))],
+        )
+        assert is_safe_url("https://example.com/path") is True
+
+    def test_check_url_blocks_private_target_before_request(self) -> None:
+        async def run_test() -> None:
+            mock_session = MagicMock()
+            status, error = await check_url(mock_session, "http://127.0.0.1/")
+            assert status is None
+            assert "non-public" in error
+            mock_session.head.assert_not_called()
 
         asyncio.run(run_test())

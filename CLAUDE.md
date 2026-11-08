@@ -18,7 +18,7 @@ awesome_bioinfo/           # 核心 Python 包
   schema.py                # 数据类: Category, AlgorithmEntry, Reference
   algorithm_registry.py    # 加载、索引、搜索
   category_manager.py      # 分类层级查询
-  validate.py              # 字段规则 + JSON Schema 双重验证
+  validate.py              # 字段规则验证
   data_io.py               # YAML/JSON/CSV 读写
   data_store.py            # 数据存储
   readme_generator.py      # 生成 README.md（从模板）
@@ -30,7 +30,7 @@ templates/
   readme_template.md       # README 模板
 
 schemas/
-  algorithm-schema.json    # JSON Schema（validate 命令使用）
+  algorithm-schema.json    # JSON Schema 定义（validate 命令不使用）
 ```
 
 ## 生成输出（禁止手动编辑）

@@ -9,6 +9,7 @@ import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
+from awesome_bioinfo.schema import AlgorithmEntry
 from awesome_bioinfo.validate import Validator
 
 # Strategies for generating test data
@@ -692,6 +693,56 @@ def test_validate_categories_file_reports_duplicate_category_ids(tmp_path: Path)
     assert validator.valid_categories == []
 
 
+def test_validate_algorithm_skips_category_check_when_categories_not_loaded():
+    """Field-only validation should keep accepting arbitrary categories before loading."""
+    validator = Validator()
+
+    result = validator.validate_algorithm(build_valid_algorithm(category="anything"))
+
+    assert result.is_valid
+
+
+def test_validate_algorithm_checks_references_after_empty_categories_file(tmp_path: Path):
+    """A loaded but empty category table must still reject unknown references."""
+    file_path = tmp_path / "categories.yaml"
+    file_path.write_text("categories: []\n", encoding="utf-8")
+    validator = Validator()
+
+    assert validator.validate_categories_file(str(file_path)).is_valid
+    result = validator.validate_algorithm(
+        build_valid_algorithm(category="nonexistent-category", subcategory="nonexistent-sub")
+    )
+
+    assert not result.is_valid
+    assert any("Invalid category: 'nonexistent-category'" in error for error in result.errors)
+    assert any("Invalid subcategory: 'nonexistent-sub'" in error for error in result.errors)
+
+
+def test_validate_all_rejects_references_when_categories_file_is_empty(tmp_path: Path):
+    """validate_all should not skip reference checks for an empty category table."""
+    data_dir = tmp_path / "data"
+    algorithms_dir = data_dir / "algorithms"
+    algorithms_dir.mkdir(parents=True)
+    (data_dir / "categories.yaml").write_text("categories: []\n", encoding="utf-8")
+    (algorithms_dir / "entries.yaml").write_text(
+        """algorithms:
+  - id: ghost-algorithm
+    name: Ghost Algorithm
+    description: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    purpose: Example purpose
+    time_complexity: O(n)
+    category: nonexistent-category
+""",
+        encoding="utf-8",
+    )
+    validator = Validator()
+
+    result = validator.validate_all(str(data_dir))
+
+    assert not result.is_valid
+    assert any("Invalid category: 'nonexistent-category'" in error for error in result.errors)
+
+
 def test_collect_category_relationships_skips_categories_without_ids():
     """Relationship collection should ignore category objects missing ids."""
     validator = Validator()
@@ -937,3 +988,147 @@ def test_references_title_must_be_non_empty_string():
     )
     assert not result.is_valid
     assert any("'title' must be a non-empty string" in e for e in result.errors)
+
+
+# --- Non-mapping input robustness ---
+
+
+def test_validate_algorithm_fields_reports_non_mapping_entry():
+    """Non-mapping algorithm entries should become validation errors, not exceptions."""
+    validator = Validator()
+
+    result = validator.validate_algorithm_fields(["not", "a", "mapping"])
+
+    assert not result.is_valid
+    assert any("must be a mapping" in error for error in result.errors)
+
+
+def test_validate_category_fields_reports_non_mapping_entry():
+    """Non-mapping category entries should become validation errors, not exceptions."""
+    validator = Validator()
+
+    result = validator.validate_category_fields("not-a-mapping")
+
+    assert not result.is_valid
+    assert any("must be a mapping" in error for error in result.errors)
+
+
+@pytest.mark.parametrize("root", ["- id: example\n", "42\n"])
+def test_validate_algorithms_file_rejects_non_mapping_root(tmp_path: Path, root: str):
+    """Algorithm files with a non-mapping YAML root should fail validation cleanly."""
+    file_path = tmp_path / "algorithms.yaml"
+    file_path.write_text(root, encoding="utf-8")
+    validator = Validator()
+
+    result = validator.validate_algorithms_file(str(file_path))
+
+    assert not result.is_valid
+    assert any("root" in error.lower() and "must be a mapping" in error for error in result.errors)
+
+
+@pytest.mark.parametrize("root", ["- id: example\n", "42\n"])
+def test_validate_categories_file_rejects_non_mapping_root(tmp_path: Path, root: str):
+    """Category files with a non-mapping YAML root should fail validation cleanly."""
+    file_path = tmp_path / "categories.yaml"
+    file_path.write_text(root, encoding="utf-8")
+    validator = Validator()
+
+    result = validator.validate_categories_file(str(file_path))
+
+    assert not result.is_valid
+    assert any("root" in error.lower() and "must be a mapping" in error for error in result.errors)
+
+
+def test_validate_algorithms_file_reports_non_mapping_entries(tmp_path: Path):
+    """Non-mapping items in an algorithms list should be reported per entry."""
+    file_path = tmp_path / "algorithms.yaml"
+    file_path.write_text(
+        """algorithms:
+  - just-a-string
+  - 42
+""",
+        encoding="utf-8",
+    )
+    validator = Validator()
+
+    result = validator.validate_algorithms_file(str(file_path))
+
+    assert not result.is_valid
+    assert sum("must be a mapping" in error for error in result.errors) == 2
+
+
+def test_validate_categories_file_reports_non_mapping_entries(tmp_path: Path):
+    """Non-mapping items in a categories list should be reported per entry."""
+    file_path = tmp_path / "categories.yaml"
+    file_path.write_text(
+        """categories:
+  - just-a-string
+  - 42
+""",
+        encoding="utf-8",
+    )
+    validator = Validator()
+
+    result = validator.validate_categories_file(str(file_path))
+
+    assert not result.is_valid
+    assert sum("must be a mapping" in error for error in result.errors) == 2
+
+
+def test_validate_all_reports_non_mapping_root(tmp_path: Path):
+    """validate_all should report non-mapping file roots instead of raising."""
+    data_dir = tmp_path / "data"
+    algorithms_dir = data_dir / "algorithms"
+    algorithms_dir.mkdir(parents=True)
+    (algorithms_dir / "entries.yaml").write_text("- id: example\n", encoding="utf-8")
+    validator = Validator()
+
+    result = validator.validate_all(str(data_dir))
+
+    assert not result.is_valid
+    assert any("must be a mapping" in error for error in result.errors)
+
+
+def test_validate_all_reports_non_mapping_entries(tmp_path: Path):
+    """validate_all should report non-mapping entries instead of raising."""
+    data_dir = tmp_path / "data"
+    algorithms_dir = data_dir / "algorithms"
+    algorithms_dir.mkdir(parents=True)
+    (algorithms_dir / "entries.yaml").write_text(
+        "algorithms:\n  - just-a-string\n",
+        encoding="utf-8",
+    )
+    validator = Validator()
+
+    result = validator.validate_all(str(data_dir))
+
+    assert not result.is_valid
+    assert any("must be a mapping" in error for error in result.errors)
+
+
+@pytest.mark.parametrize("field", ["language", "references"])
+def test_null_list_fields_are_rejected(field: str):
+    """Explicit null list fields must fail validation instead of crashing later."""
+    validator = Validator()
+
+    result = validator.validate_algorithm(build_valid_algorithm(**{field: None}))
+
+    assert not result.is_valid
+    assert f"Field '{field}' must be a list" in result.errors
+
+
+def test_schema_normalizes_null_list_fields():
+    """Loading data with null list fields should not raise during registry/export."""
+    data = build_valid_algorithm(
+        language=None,
+        references=None,
+        tags=None,
+        related_tools=None,
+    )
+
+    entry = AlgorithmEntry.from_dict(data)
+
+    assert entry.language == []
+    assert entry.references == []
+    assert entry.tags == []
+    assert entry.related_tools == []

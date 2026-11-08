@@ -100,9 +100,7 @@ async def check_url(
         for _ in range(max_redirects + 1):
             if not is_safe_url(current):
                 return None, "URL targets a non-public address"
-            async with session.head(
-                current, timeout=timeout, allow_redirects=False
-            ) as response:
+            async with session.head(current, timeout=timeout, allow_redirects=False) as response:
                 if response.status in (301, 302, 303, 307, 308):
                     location = response.headers.get("Location")
                     if not location:

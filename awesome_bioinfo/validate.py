@@ -410,7 +410,7 @@ class Validator(FieldValidator):
         return result
 
     def validate_algorithms_file(
-        self, file_path: str, parsed: dict[str, Any] | None = None
+        self, file_path: str, parsed: Optional[dict[str, Any]] = None
     ) -> ValidationResult:
         """
         Validate an algorithms YAML file.

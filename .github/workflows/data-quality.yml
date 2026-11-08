@@ -20,7 +20,11 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install -e .
+        # requirements-dev.txt 是 runtime + dev 的统一哈希锁，含 aiohttp 等运行依赖；
+        # 只维护一份锁文件，避免两份清单漂移。
+        run: |
+          pip install --require-hashes -r requirements-dev.txt
+          pip install -e . --no-deps
 
       - name: Check URL validity
         run: python -m awesome_bioinfo check-links

@@ -59,8 +59,9 @@
 git clone https://github.com/open-genomics/awesome-bioinfo-algorithms.git
 cd awesome-bioinfo-algorithms
 
-# 安装依赖
-pip install -e ".[dev]"
+# 安装依赖（哈希锁定的依赖清单，项目本体不重新解析依赖）
+pip install --require-hashes -r requirements-dev.txt
+pip install -e . --no-deps
 
 # 校验数据
 python -m awesome_bioinfo validate

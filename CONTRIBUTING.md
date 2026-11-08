@@ -66,7 +66,9 @@ python -m awesome_bioinfo search --category sequence-alignment
 ## 本地验证
 
 ```bash
-pip install -e ".[dev]"
+# 依赖来自带哈希校验的锁文件；改 pyproject 依赖后须重新生成（见 AGENTS.md）
+pip install --require-hashes -r requirements-dev.txt
+pip install -e . --no-deps
 python -m awesome_bioinfo validate
 python -m pytest tests/ -v
 # 数据或模板变更后重新生成 README

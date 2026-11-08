@@ -92,9 +92,7 @@ class TestCmdExport:
         finally:
             os.unlink(output_path)
 
-    def test_export_csv_neutralizes_formula_prefixes(
-        self, mock_category_manager, capsys
-    ):
+    def test_export_csv_neutralizes_formula_prefixes(self, mock_category_manager, capsys):
         """Cells starting with spreadsheet formula prefixes must be quoted."""
         registry = AlgorithmRegistry()
         registry.from_algorithms(

@@ -41,3 +41,20 @@ pytest tests/ -v --tb=short
 - 路径即分类：`.agents/notes/<lifecycle>/<class>/yyyy-mm-dd-topic.md`，lifecycle ∈ `proposed` / `implemented` / `rejected`，class ∈ `feature` / `bug-fix` / `simplification` / `architecture` / `process` / `testing`；只建用到的目录
 - 格式：前三行 `# Agent Note: <标题>` + 空行 + `Status: implemented`；正文骨架 `## Problem` → `## Decision`（现在时）→ `## Alternatives considered`（只记真实考虑过的备选）→ `## Consequences`（代价与收益）→ `## Verification`（具体命令）
 - 动手前先检索历史决策：`rg --hidden --glob '!.agents/notes/archived/**' "<关键词>" .agents/notes/`
+
+## 依赖锁
+
+`requirements-dev.txt` 是 runtime + dev 的**唯一**依赖真相源：CI 与本地都用
+`pip install --require-hashes -r requirements-dev.txt && pip install -e . --no-deps`
+安装，pip 不会重新解析 `pyproject.toml`。
+
+```bash
+uv pip compile pyproject.toml --extra dev --generate-hashes --universal \
+  --python-version 3.9 -o requirements-dev.txt
+```
+
+- `--universal --python-version 3.9` 生成带 `python_full_version` 标记的跨版本、
+  跨平台锁，CI 的 3.9–3.12 矩阵共用一份。
+- 改 `pyproject.toml` 依赖后必须重新生成并提交锁文件，否则 CI 装不到新依赖。
+- `ruff` 在 `pyproject.toml` 里精确固定，且必须与 `.pre-commit-config.yaml` 的
+  `ruff-pre-commit` rev 一致：`ruff format` 输出随版本变化，两者不同版本会互相改写。

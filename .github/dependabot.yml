@@ -1,0 +1,15 @@
+version: 2
+# 固定 SHA 的 Actions 与 Python 依赖都靠 Dependabot 提 PR 更新；
+# 只创建 PR、不自动合并，让版本变化进入 review。
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

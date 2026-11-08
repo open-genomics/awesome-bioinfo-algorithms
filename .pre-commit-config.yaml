@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.0
+    rev: 8d1fdcef5530fb53b66bf6b717bfd2b1ffb0160d  # v0.9.0
     hooks:
       - id: ruff
         files: ^(awesome_bioinfo|tests)/.*\.py$
@@ -9,7 +9,7 @@ repos:
         files: ^(awesome_bioinfo|tests)/.*\.py$
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.28.0
+    rev: cb934cfd6d2eea1aed7b20e4e9e6339d5952322c  # 0.28.0
     hooks:
       - id: check-yaml
         name: check-yaml-syntax

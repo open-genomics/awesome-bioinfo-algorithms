@@ -492,15 +492,24 @@ def test_list_field_items_must_be_non_empty_strings(field_name: str):
     )
 
 
-def test_non_integer_year_remains_warning():
-    """Non-integer year values should warn without failing validation."""
+def test_non_integer_year_is_rejected():
+    """Non-integer year values would break generate's year sort, so they fail validation."""
     validator = Validator()
 
     result = validator.validate_algorithm(build_valid_algorithm(year="1998"))
 
-    assert result.is_valid
-    assert not result.errors
-    assert any("Field 'year' should be an integer" in warning for warning in result.warnings)
+    assert not result.is_valid
+    assert any("Field 'year' must be an integer" in error for error in result.errors)
+
+
+def test_empty_string_year_is_rejected():
+    """An empty year string must not slip through to the generator's int sort."""
+    validator = Validator()
+
+    result = validator.validate_algorithm(build_valid_algorithm(year=""))
+
+    assert not result.is_valid
+    assert any("Field 'year' must be an integer" in error for error in result.errors)
 
 
 def test_invalid_url_remains_warning():
@@ -614,7 +623,7 @@ def test_validate_algorithms_file_reports_entry_warnings_and_duplicate_ids(tmp_p
 
     assert not result.is_valid
     assert any("Duplicate algorithm ID: 'shared-id'" in error for error in result.errors)
-    assert any("Field 'year' should be an integer" in warning for warning in result.warnings)
+    assert any("Field 'year' must be an integer" in error for error in result.errors)
     assert any("Invalid URL format in 'paper_url'" in warning for warning in result.warnings)
 
 

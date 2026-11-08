@@ -180,13 +180,12 @@ class FieldValidator:
             )
 
         year = data.get("year", 0)
-        if year:
-            if not isinstance(year, int):
-                result.add_warning(
-                    f"Field 'year' should be an integer, got {type(year).__name__}: {year}"
-                )
-            elif year < 1950 or year > datetime.now().year + 5:
-                result.add_warning(f"Suspicious year value: {year}")
+        # 非整数 year（含空字符串/null）会让 generate 的年份排序抛 TypeError，
+        # 这里直接判错，而不是只给警告放行。
+        if not isinstance(year, int) or isinstance(year, bool):
+            result.add_error(f"Field 'year' must be an integer, got {type(year).__name__}: {year}")
+        elif year and (year < 1950 or year > datetime.now().year + 5):
+            result.add_warning(f"Suspicious year value: {year}")
 
         for url_field in ["paper_url", "implementation_url"]:
             url = data.get(url_field, "")
@@ -224,8 +223,7 @@ class FieldValidator:
             for i, ref in enumerate(references):
                 if not isinstance(ref, dict):
                     result.add_error(
-                        f"Field 'references' item {i} must be a mapping, "
-                        f"got {type(ref).__name__}"
+                        f"Field 'references' item {i} must be a mapping, got {type(ref).__name__}"
                     )
                     continue
                 if "url" not in ref:
@@ -411,17 +409,24 @@ class Validator(FieldValidator):
 
         return result
 
-    def validate_algorithms_file(self, file_path: str) -> ValidationResult:
+    def validate_algorithms_file(
+        self, file_path: str, parsed: dict[str, Any] | None = None
+    ) -> ValidationResult:
         """
         Validate an algorithms YAML file.
 
         Args:
             file_path: Path to the algorithms YAML file
+            parsed: 可选输出参数；成功解析时写入文件内容，供调用方复用，
+                避免对同一文件重复 open + safe_load。
 
         Returns:
             ValidationResult with validation status and any errors/warnings
         """
         result, data = self.validate_yaml_file(file_path)
+        if isinstance(parsed, dict) and isinstance(data, dict):
+            parsed.clear()
+            parsed.update(data)
         if not result.is_valid:
             return result
 
@@ -541,19 +546,15 @@ class Validator(FieldValidator):
             for filename in sorted(os.listdir(algorithms_dir)):
                 if filename.endswith(".yaml") or filename.endswith(".yml"):
                     file_path = os.path.join(algorithms_dir, filename)
-                    algo_result = self.validate_algorithms_file(file_path)
+                    parsed: dict[str, Any] = {}
+                    algo_result = self.validate_algorithms_file(file_path, parsed)
                     for error in algo_result.errors:
                         result.add_error(f"{filename}: {error}")
                     for warning in algo_result.warnings:
                         result.add_warning(f"{filename}: {warning}")
 
-                    parse_result, data = self.validate_yaml_file(file_path)
-                    if (
-                        parse_result.is_valid
-                        and isinstance(data, dict)
-                        and isinstance(data.get("algorithms"), list)
-                    ):
-                        for algo in data["algorithms"]:
+                    if isinstance(parsed.get("algorithms"), list):
+                        for algo in parsed["algorithms"]:
                             if not isinstance(algo, dict):
                                 continue
                             algo_id = algo.get("id")
